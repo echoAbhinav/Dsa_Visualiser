@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Code2, Zap } from "lucide-react";
-import { useRef } from "react";
+
 
 export default function Hero() {
 
