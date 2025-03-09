@@ -32,7 +32,7 @@ export default function Footer() {
             </div>
 
             <div className="flex space-x-6">
-              <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400">
+              <a href="https://github.com/Nitinverma9784" className="text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400">
                 GitHub
               </a>
               <a onClick={(event) => showComingSoonToast(event)} className="cursor-pointer text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400">
