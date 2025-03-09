@@ -87,7 +87,6 @@ export default function AlgorithmVisualizer({ algorithm, array, state, type, sea
       // Draw searching visualization
       const boxSize = Math.min(50, canvas.width / currentArray.length)
       const boxesPerRow = Math.floor(canvas.width / boxSize)
-      const rows = Math.ceil(currentArray.length / boxesPerRow)
 
       currentArray.forEach((value, index) => {
         const row = Math.floor(index / boxesPerRow)
@@ -132,7 +131,7 @@ export default function AlgorithmVisualizer({ algorithm, array, state, type, sea
           const leftX = (left % boxesPerRow) * boxSize
           const leftY = Math.floor(left / boxesPerRow) * boxSize
           const rightX = ((right % boxesPerRow) + 1) * boxSize
-          const rightY = Math.floor(right / boxesPerRow) * boxSize
+          
 
           // Draw range rectangle
           ctx.strokeRect(leftX, leftY, rightX - leftX, boxSize)

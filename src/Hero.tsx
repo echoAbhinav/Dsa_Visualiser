@@ -5,7 +5,7 @@ import { useRef } from "react";
 
 export default function Hero() {
 
-  const targetRef = useRef<HTMLDivElement | null>(null);
+
 
   const scrollToSection = () => {
     const target = document.getElementById("algorithms");
