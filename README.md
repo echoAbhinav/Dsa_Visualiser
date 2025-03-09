@@ -24,6 +24,6 @@ A powerful Data Structure and Algorithm (DSA) Visualizer built with React, ShadC
 
 ### 1️⃣ Install Dependencies  
 ```sh
-git clone https://github.com/yourusername/dsa-visualizer.git  
+git clone https://github.com/Nitinverma9784/DsaVisualiser
 
 npm install
