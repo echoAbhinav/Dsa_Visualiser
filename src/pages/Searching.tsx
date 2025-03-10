@@ -1,8 +1,8 @@
 import AlgorithmDetail from "../algorithm-detail"
 import { searchingAlgorithms } from "@/lib/searching-algorithms"
-import { useEffect } from "react";
 
-export default function SearchingAlgorithmsPage() {
+
+const SearchingAlgorithmsPage =() => {
 
 
   return (
@@ -22,3 +22,4 @@ export default function SearchingAlgorithmsPage() {
   )
 }
 
+export default SearchingAlgorithmsPage;

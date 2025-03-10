@@ -17,7 +17,7 @@ function Layout() {
   return (
     <>
 <Navbar/>
-    <Outlet/>
+    <Outlet key={location.pathname}/>
     <Footer/>
       
     </>

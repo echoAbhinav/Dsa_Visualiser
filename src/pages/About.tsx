@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
-export default function About() {
+const About = ()=> {
   return (
     <section className="max-w-3xl mx-auto px-6 py-16">
       {/* Header Section */}
@@ -104,3 +104,4 @@ export default function About() {
     </section>
   );
 }
+export default About;
