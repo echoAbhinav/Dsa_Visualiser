@@ -152,6 +152,11 @@ export default function Navbar() {
                   <BarChart3 className="h-5 w-5 mr-2 inline-block text-purple-500" />
                   Sorting
                 </Link>
+
+                <Link to="/about" className="block text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2 rounded-md">
+                  
+                  About
+                </Link>
               </div>
             </div>
           )}

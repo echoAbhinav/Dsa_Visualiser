@@ -1,11 +1,11 @@
 import { StrictMode } from 'react'
-import {  createBrowserRouter, Route, RouterProvider } from "react-router";
+import {  createBrowserRouter, Route, RouterProvider } from "react-router-dom";
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import Layout from './Layout.tsx'
 import Home from './pages/Home.tsx';
 import Searching from './pages/Searching.tsx';
-import { createRoutesFromElements } from 'react-router';
+import { createRoutesFromElements } from 'react-router-dom';
 import About from './pages/About.tsx';
 
 import Sorting from './pages/Sorting.tsx';

@@ -4,8 +4,16 @@ import Navbar from './Navbar'
 import Footer from './Footer'
 
 import { Outlet } from 'react-router-dom'
-
+import { useLocation } from "react-router-dom";
+import { useEffect } from 'react';
 function Layout() {
+
+
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log("Route changed:", location.pathname);
+  }, [location]);
   return (
     <>
 <Navbar/>

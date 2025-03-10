@@ -1,7 +1,10 @@
 import AlgorithmDetail from "../algorithm-detail"
 import { searchingAlgorithms } from "@/lib/searching-algorithms"
+import { useEffect } from "react";
 
 export default function SearchingAlgorithmsPage() {
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-black dark:to-black py-8 mt-10">
       <div className="container mx-auto px-4">
