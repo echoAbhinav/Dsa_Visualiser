@@ -163,6 +163,7 @@ export default function AlgorithmVisualizer({ algorithm, array, state, type, sea
     return () => {
       if (animationFrame !== null) {
         cancelAnimationFrame(animationFrame)
+        setAnimationFrame(animationFrame)
       }
     }
   }, [array, state, type, searchTarget, animationFrame])
