@@ -158,10 +158,6 @@ export default function AlgorithmVisualizer({ algorithm, array, state, type, sea
     }
 
     // Request animation frame for smooth updates
-    const frame = requestAnimationFrame(() => {
-      // This empty callback ensures we keep updating the canvas
-    })
-
   
 
     return () => {
