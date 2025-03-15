@@ -3,8 +3,8 @@ import Navbar from './Navbar'
 
 import Footer from './Footer'
 
-import { Outlet } from 'react-router-dom'
-import { useLocation } from "react-router-dom";
+import { Outlet } from 'react-router'
+import { useLocation } from "react-router";
 import { useEffect } from 'react';
 function Layout() {
 

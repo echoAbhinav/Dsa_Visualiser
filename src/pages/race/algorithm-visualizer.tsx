@@ -162,7 +162,7 @@ export default function AlgorithmVisualizer({ algorithm, array, state, type, sea
       // This empty callback ensures we keep updating the canvas
     })
 
-    setAnimationFrame(frame)
+  
 
     return () => {
       if (animationFrame !== null) {

@@ -1,4 +1,4 @@
-
+"use client"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,6 @@ import { searchingAlgorithms } from "@/lib/searching-algorithms"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function AlgorithmRace() {
- 
   const [algorithmType, setAlgorithmType] = useState<"sorting" | "searching">("sorting")
 
   const [array, setArray] = useState<number[]>([])
@@ -95,6 +94,7 @@ export default function AlgorithmRace() {
   }
 
   const startRace = () => {
+    // If we're resuming from a paused state
     if (isPaused) {
       setIsPaused(false)
       return
@@ -106,145 +106,160 @@ export default function AlgorithmRace() {
 
     // Start time for each algorithm
     const startTimes: { [key: string]: number } = {}
+    const pausedTimes: { [key: string]: number } = {}
+
     selectedAlgorithms.forEach((algo) => {
       startTimes[algo] = Date.now()
+      pausedTimes[algo] = 0
     })
 
-    // Simulate algorithm execution with more realistic behavior
-    const interval = setInterval(() => {
-      if (isPaused) return
+    // Store the interval ID so we can clear it when pausing
+    let intervalId: NodeJS.Timeout
 
-      setAlgorithmStates((prevStates) => {
-        const newStates = { ...prevStates }
-        let allCompleted = true
+    const runInterval = () => {
+      intervalId = setInterval(() => {
+        setAlgorithmStates((prevStates) => {
+          const newStates = { ...prevStates }
+          let allCompleted = true
 
-        selectedAlgorithms.forEach((algo) => {
-          if (!newStates[algo].completed) {
-            // Calculate elapsed time
-            const timeElapsed = Date.now() - startTimes[algo]
+          selectedAlgorithms.forEach((algo) => {
+            if (!newStates[algo].completed) {
+              // Calculate elapsed time, accounting for paused time
+              const timeElapsed = Date.now() - startTimes[algo] - pausedTimes[algo]
 
-            // Simulate progress based on algorithm efficiency
-            let progressIncrement = 0
-            let comparisonIncrement = 0
-            let swapIncrement = 0
+              // Simulate progress based on algorithm efficiency
+              let progressIncrement = 0
+              let comparisonIncrement = 0
+              let swapIncrement = 0
 
-            if (algorithmType === "sorting") {
-              // Different progress rates based on algorithm efficiency
-              switch (algo) {
-                case "quickSort":
-                case "mergeSort":
-                  progressIncrement = (Math.random() * 3 + 2) * (speed / 50)
-                  comparisonIncrement = Math.floor(Math.random() * 2) + 1
-                  swapIncrement = Math.floor(Math.random() * 1) + 1
-                  break
-                case "insertionSort":
-                  progressIncrement = (Math.random() * 2 + 1) * (speed / 50)
-                  comparisonIncrement = Math.floor(Math.random() * 3) + 1
-                  swapIncrement = Math.floor(Math.random() * 2) + 1
-                  break
-                case "selectionSort":
-                case "bubbleSort":
-                  progressIncrement = (Math.random() * 1 + 0.5) * (speed / 50)
-                  comparisonIncrement = Math.floor(Math.random() * 4) + 2
-                  swapIncrement = Math.floor(Math.random() * 3) + 1
-                  break
-                default:
-                  progressIncrement = Math.random() * 2 * (speed / 50)
-                  comparisonIncrement = Math.floor(Math.random() * 3) + 1
-                  swapIncrement = Math.floor(Math.random() * 2) + 1
-              }
-            } else {
-              // Searching algorithms
-              switch (algo) {
-                case "binarySearch":
-                  progressIncrement = (Math.random() * 5 + 5) * (speed / 50)
-                  comparisonIncrement = 1
-                  break
-                case "linearSearch":
-                  progressIncrement = (Math.random() * 2 + 1) * (speed / 50)
-                  comparisonIncrement = Math.floor(Math.random() * 3) + 1
-                  break
-                default:
-                  progressIncrement = Math.random() * 3 * (speed / 50)
-                  comparisonIncrement = Math.floor(Math.random() * 2) + 1
-              }
-            }
-
-            const newProgress = Math.min(100, newStates[algo].progress + progressIncrement)
-
-            // Simulate array changes
-            let currentArray = [...newStates[algo].currentArray]
-            let currentIndices: number[] = []
-
-            if (algorithmType === "sorting") {
-              // For sorting, gradually sort the array as progress increases
-              if (newProgress > newStates[algo].progress) {
-                const sortProgress = newProgress / 100
-                const originalArray = [...array]
-                const sortedArray = [...array].sort((a, b) => a - b)
-
-                // Create a partially sorted array based on progress
-                currentArray = originalArray.map((val, idx) => {
-                  if (Math.random() < sortProgress) {
-                    return sortedArray[idx]
-                  }
-                  return val
-                })
-
-                // Add some random indices for visualization
-                const numIndices = Math.floor(Math.random() * 3) + 1
-                for (let i = 0; i < numIndices; i++) {
-                  currentIndices.push(Math.floor(Math.random() * array.length))
+              if (algorithmType === "sorting") {
+                // Different progress rates based on algorithm efficiency
+                switch (algo) {
+                  case "quickSort":
+                  case "mergeSort":
+                    progressIncrement = (Math.random() * 3 + 2) * (speed / 50)
+                    comparisonIncrement = Math.floor(Math.random() * 2) + 1
+                    swapIncrement = Math.floor(Math.random() * 1) + 1
+                    break
+                  case "insertionSort":
+                    progressIncrement = (Math.random() * 2 + 1) * (speed / 50)
+                    comparisonIncrement = Math.floor(Math.random() * 3) + 1
+                    swapIncrement = Math.floor(Math.random() * 2) + 1
+                    break
+                  case "selectionSort":
+                  case "bubbleSort":
+                    progressIncrement = (Math.random() * 1 + 0.5) * (speed / 50)
+                    comparisonIncrement = Math.floor(Math.random() * 4) + 2
+                    swapIncrement = Math.floor(Math.random() * 3) + 1
+                    break
+                  default:
+                    progressIncrement = Math.random() * 2 * (speed / 50)
+                    comparisonIncrement = Math.floor(Math.random() * 3) + 1
+                    swapIncrement = Math.floor(Math.random() * 2) + 1
+                }
+              } else {
+                // Searching algorithms
+                switch (algo) {
+                  case "binarySearch":
+                    progressIncrement = (Math.random() * 5 + 5) * (speed / 50)
+                    comparisonIncrement = 1
+                    break
+                  case "linearSearch":
+                    progressIncrement = (Math.random() * 2 + 1) * (speed / 50)
+                    comparisonIncrement = Math.floor(Math.random() * 3) + 1
+                    break
+                  default:
+                    progressIncrement = Math.random() * 3 * (speed / 50)
+                    comparisonIncrement = Math.floor(Math.random() * 2) + 1
                 }
               }
-            } else {
-              // For searching, simulate the search process
-              if (algo === "binarySearch") {
-                // Binary search visualization
-                const progress = newProgress / 100
-                const arrayLength = array.length
-                const left = Math.floor((arrayLength * (1 - progress)) / 2)
-                const right = Math.floor((arrayLength * (1 + progress)) / 2)
-                const mid = Math.floor((left + right) / 2)
 
-                currentIndices = [left, mid, right]
+              const newProgress = Math.min(100, newStates[algo].progress + progressIncrement)
+
+              // Simulate array changes
+              let currentArray = [...newStates[algo].currentArray]
+              let currentIndices: number[] = []
+
+              if (algorithmType === "sorting") {
+                // For sorting, gradually sort the array as progress increases
+                if (newProgress > newStates[algo].progress) {
+                  const sortProgress = newProgress / 100
+                  const originalArray = [...array]
+                  const sortedArray = [...array].sort((a, b) => a - b)
+
+                  // Create a partially sorted array based on progress
+                  currentArray = originalArray.map((val, idx) => {
+                    if (Math.random() < sortProgress) {
+                      return sortedArray[idx]
+                    }
+                    return val
+                  })
+
+                  // Add some random indices for visualization
+                  const numIndices = Math.floor(Math.random() * 3) + 1
+                  for (let i = 0; i < numIndices; i++) {
+                    currentIndices.push(Math.floor(Math.random() * array.length))
+                  }
+                }
               } else {
-                // Linear search visualization
-                const progress = newProgress / 100
-                const searchPosition = Math.floor(array.length * progress)
-                currentIndices = [searchPosition]
+                // For searching, simulate the search process
+                if (algo === "binarySearch") {
+                  // Binary search visualization
+                  const progress = newProgress / 100
+                  const arrayLength = array.length
+                  const left = Math.floor((arrayLength * (1 - progress)) / 2)
+                  const right = Math.floor((arrayLength * (1 + progress)) / 2)
+                  const mid = Math.floor((left + right) / 2)
+
+                  currentIndices = [left, mid, right]
+                } else {
+                  // Linear search visualization
+                  const progress = newProgress / 100
+                  const searchPosition = Math.floor(array.length * progress)
+                  currentIndices = [searchPosition]
+                }
               }
-            }
 
-            newStates[algo] = {
-              ...newStates[algo],
-              progress: newProgress,
-              comparisons: newStates[algo].comparisons + comparisonIncrement,
-              swaps: algorithmType === "sorting" ? newStates[algo].swaps + swapIncrement : 0,
-              timeElapsed: timeElapsed,
-              currentArray: currentArray,
-              currentIndices: currentIndices,
-              completed: newProgress >= 100,
-            }
+              newStates[algo] = {
+                ...newStates[algo],
+                progress: newProgress,
+                comparisons: newStates[algo].comparisons + comparisonIncrement,
+                swaps: algorithmType === "sorting" ? newStates[algo].swaps + swapIncrement : 0,
+                timeElapsed: timeElapsed,
+                currentArray: currentArray,
+                currentIndices: currentIndices,
+                completed: newProgress >= 100,
+              }
 
-            if (newProgress < 100) allCompleted = false
+              if (newProgress < 100) allCompleted = false
+            }
+          })
+
+          if (allCompleted) {
+            clearInterval(intervalId)
+            setIsRunning(false)
           }
+
+          return newStates
         })
+      }, 100) // Update every 100ms for smoother animation
+    }
 
-        if (allCompleted) {
-          clearInterval(interval)
-          setIsRunning(false)
-        }
+    // Start the interval
+    runInterval()
 
-        return newStates
-      })
-    }, 100) // Update every 100ms for smoother animation
+    // Store the interval cleanup function
+    const cleanupInterval = () => {
+      if (intervalId) clearInterval(intervalId)
+    }
 
-    return () => clearInterval(interval)
+    return cleanupInterval
   }
 
   const pauseRace = () => {
     setIsPaused(true)
+    // When pausing, we clear the current interval
+    // The startRace function will create a new one when resuming
   }
 
   const resetRace = () => {
@@ -283,11 +298,11 @@ export default function AlgorithmRace() {
   const handleSearchTargetChange = (target: number) => {
     setSearchTarget(target)
   }
-const handleAlgorithmTypeChange = (type: string) => {
-  setAlgorithmType(type as "sorting" | "searching")
-  setSelectedAlgorithms([])
-}
 
+  const handleAlgorithmTypeChange = (type: string) => {
+    setAlgorithmType(type as "sorting" | "searching")
+    setSelectedAlgorithms([])
+  }
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
