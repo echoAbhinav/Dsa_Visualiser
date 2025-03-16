@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DataStructureVisualizer from "./data-structure-visualizer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -19,14 +19,81 @@ export default function StacksPage() {
   const [newValue, setNewValue] = useState<string>("")
   const [isPushDialogOpen, setIsPushDialogOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const [isPopping, setIsPopping] = useState(false)
-  const [isPeeking, setIsPeeking] = useState(false)
+  const [animationState, setAnimationState] = useState<"idle" | "pushing" | "popping" | "peeking">("idle")
+  const [animationStep, setAnimationStep] = useState<number>(0)
+  const [animationMessage, setAnimationMessage] = useState<string>("")
+  const [newElement, setNewElement] = useState<number | null>(null)
 
-  // Animation timeout to reset active index
-  const resetActiveIndex = () => {
-    setTimeout(() => {
-      setActiveIndex(null)
-    }, 1500)
+  // Reset animation state after completion
+  useEffect(() => {
+    if (animationState !== "idle" && animationStep > 0) {
+      const timer = setTimeout(() => {
+        if (animationStep < getMaxSteps()) {
+          setAnimationStep(animationStep + 1)
+          updateAnimationMessage()
+        } else {
+          // Animation complete
+          setTimeout(() => {
+            if (animationState !== "peeking") {
+              setAnimationState("idle")
+              setAnimationStep(0)
+              setActiveIndex(null)
+              setAnimationMessage("")
+              setNewElement(null)
+            } else {
+              // For peeking, just keep highlighting the top element for a bit longer
+              setTimeout(() => {
+                setAnimationState("idle")
+                setAnimationStep(0)
+                setActiveIndex(null)
+                setAnimationMessage("")
+              }, 1500)
+            }
+          }, 1000)
+        }
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [animationState, animationStep])
+
+  // Get max steps for current animation
+  const getMaxSteps = () => {
+    switch (animationState) {
+      case "pushing":
+        return 2
+      case "popping":
+        return 2
+      case "peeking":
+        return 1
+      default:
+        return 0
+    }
+  }
+
+  // Update animation message based on current step
+  const updateAnimationMessage = () => {
+    const val = newElement
+
+    switch (animationState) {
+      case "pushing":
+        if (animationStep === 1) {
+          setAnimationMessage(`Creating new node with value ${val}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Pushed ${val} to the top of the stack`)
+        }
+        break
+      case "popping":
+        if (animationStep === 1) {
+          setAnimationMessage(`Removing top element: ${stack[stack.length - 1]}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Popped ${stack[stack.length - 1]} from the stack`)
+        }
+        break
+      case "peeking":
+        setAnimationMessage(`Peeking at top element: ${stack[stack.length - 1]}`)
+        break
+    }
   }
 
   // Stack operations
@@ -36,36 +103,42 @@ export default function StacksPage() {
     const value = Number.parseInt(newValue)
     if (isNaN(value)) return
 
-    setStack([...stack, value])
+    setNewElement(value)
+    setAnimationState("pushing")
+    setAnimationStep(1)
+    updateAnimationMessage()
+
+    // Perform actual stack update after animation
+    setTimeout(() => {
+      setStack([...stack, value])
+      setActiveIndex(stack.length)
+    }, 1000)
+
     setNewValue("")
-    setActiveIndex(stack.length)
     setIsPushDialogOpen(false)
-    resetActiveIndex()
   }
 
   const handlePop = () => {
     if (stack.length === 0) return
 
+    setAnimationState("popping")
+    setAnimationStep(1)
     setActiveIndex(stack.length - 1)
-    setIsPopping(true)
+    updateAnimationMessage()
 
+    // Perform actual stack update after animation
     setTimeout(() => {
       setStack(stack.slice(0, -1))
-      setActiveIndex(null)
-      setIsPopping(false)
-    }, 800)
+    }, 2000)
   }
 
   const handlePeek = () => {
     if (stack.length === 0) return
 
+    setAnimationState("peeking")
+    setAnimationStep(1)
     setActiveIndex(stack.length - 1)
-    setIsPeeking(true)
-
-    setTimeout(() => {
-      setActiveIndex(null)
-      setIsPeeking(false)
-    }, 1500)
+    updateAnimationMessage()
   }
 
   const renderStackVisualization = () => {
@@ -73,8 +146,24 @@ export default function StacksPage() {
       <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 h-full flex flex-col">
         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Stack Visualization</h3>
 
+        {animationMessage && (
+          <div className="mb-4 p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-md text-center">
+            {animationMessage}
+          </div>
+        )}
+
         <div className="flex-grow flex items-center justify-center">
           <div className="flex flex-col-reverse gap-1 items-center">
+            {/* New element being pushed */}
+            {animationState === "pushing" && animationStep === 1 && newElement !== null && (
+              <div
+                className="w-48 h-12 flex items-center justify-center rounded-lg border-2 border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 animate-bounce mb-4"
+                style={{ transform: "translateY(-20px)" }}
+              >
+                <span className="text-lg font-medium">{newElement}</span>
+              </div>
+            )}
+
             {stack.map((value, idx) => (
               <div
                 key={idx}
@@ -82,15 +171,16 @@ export default function StacksPage() {
                   w-48 h-12 flex items-center justify-center rounded-lg border-2 
                   ${
                     activeIndex === idx
-                      ? isPopping
+                      ? animationState === "popping"
                         ? "border-red-500 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 animate-pulse"
-                        : isPeeking
+                        : animationState === "peeking"
                           ? "border-blue-500 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 animate-pulse"
                           : "border-purple-500 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 animate-pulse"
                       : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   }
                   transition-all duration-300
                   ${idx === stack.length - 1 ? "relative" : ""}
+                  ${animationState === "popping" && idx === stack.length - 1 && animationStep === 2 ? "transform -translate-y-10 opacity-0" : ""}
                 `}
               >
                 <span className="text-lg font-medium">{value}</span>
@@ -169,18 +259,19 @@ export default function StacksPage() {
             name: "Push",
             description: "Add an element to the top of the stack",
             action: () => setIsPushDialogOpen(true),
+            disabled: animationState !== "idle",
           },
           {
             name: "Pop",
             description: "Remove the top element from the stack",
             action: handlePop,
-            disabled: stack.length === 0,
+            disabled: stack.length === 0 || animationState !== "idle",
           },
           {
             name: "Peek",
             description: "View the top element without removing it",
             action: handlePeek,
-            disabled: stack.length === 0,
+            disabled: stack.length === 0 || animationState !== "idle",
           },
         ]}
         renderVisualization={renderStackVisualization}

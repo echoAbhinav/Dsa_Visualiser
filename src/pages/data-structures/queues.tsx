@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DataStructureVisualizer from "./data-structure-visualizer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -19,14 +19,81 @@ export default function QueuesPage() {
   const [newValue, setNewValue] = useState<string>("")
   const [isEnqueueDialogOpen, setIsEnqueueDialogOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const [isDequeuing, setIsDequeuing] = useState(false)
-  const [isPeeking, setIsPeeking] = useState(false)
+  const [animationState, setAnimationState] = useState<"idle" | "enqueueing" | "dequeueing" | "peeking">("idle")
+  const [animationStep, setAnimationStep] = useState<number>(0)
+  const [animationMessage, setAnimationMessage] = useState<string>("")
+  const [newElement, setNewElement] = useState<number | null>(null)
 
-  // Animation timeout to reset active index
-  const resetActiveIndex = () => {
-    setTimeout(() => {
-      setActiveIndex(null)
-    }, 1500)
+  // Reset animation state after completion
+  useEffect(() => {
+    if (animationState !== "idle" && animationStep > 0) {
+      const timer = setTimeout(() => {
+        if (animationStep < getMaxSteps()) {
+          setAnimationStep(animationStep + 1)
+          updateAnimationMessage()
+        } else {
+          // Animation complete
+          setTimeout(() => {
+            if (animationState !== "peeking") {
+              setAnimationState("idle")
+              setAnimationStep(0)
+              setActiveIndex(null)
+              setAnimationMessage("")
+              setNewElement(null)
+            } else {
+              // For peeking, just keep highlighting the front element for a bit longer
+              setTimeout(() => {
+                setAnimationState("idle")
+                setAnimationStep(0)
+                setActiveIndex(null)
+                setAnimationMessage("")
+              }, 1500)
+            }
+          }, 1000)
+        }
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [animationState, animationStep])
+
+  // Get max steps for current animation
+  const getMaxSteps = () => {
+    switch (animationState) {
+      case "enqueueing":
+        return 2
+      case "dequeueing":
+        return 2
+      case "peeking":
+        return 1
+      default:
+        return 0
+    }
+  }
+
+  // Update animation message based on current step
+  const updateAnimationMessage = () => {
+    const val = newElement
+
+    switch (animationState) {
+      case "enqueueing":
+        if (animationStep === 1) {
+          setAnimationMessage(`Creating new node with value ${val}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Enqueued ${val} at the rear of the queue`)
+        }
+        break
+      case "dequeueing":
+        if (animationStep === 1) {
+          setAnimationMessage(`Removing front element: ${queue[0]}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Dequeued ${queue[0]} from the queue`)
+        }
+        break
+      case "peeking":
+        setAnimationMessage(`Peeking at front element: ${queue[0]}`)
+        break
+    }
   }
 
   // Queue operations
@@ -36,42 +103,54 @@ export default function QueuesPage() {
     const value = Number.parseInt(newValue)
     if (isNaN(value)) return
 
-    setQueue([...queue, value])
+    setNewElement(value)
+    setAnimationState("enqueueing")
+    setAnimationStep(1)
+    updateAnimationMessage()
+
+    // Perform actual queue update after animation
+    setTimeout(() => {
+      setQueue([...queue, value])
+      setActiveIndex(queue.length)
+    }, 1000)
+
     setNewValue("")
-    setActiveIndex(queue.length)
     setIsEnqueueDialogOpen(false)
-    resetActiveIndex()
   }
 
   const handleDequeue = () => {
     if (queue.length === 0) return
 
+    setAnimationState("dequeueing")
+    setAnimationStep(1)
     setActiveIndex(0)
-    setIsDequeuing(true)
+    updateAnimationMessage()
 
+    // Perform actual queue update after animation
     setTimeout(() => {
       setQueue(queue.slice(1))
-      setActiveIndex(null)
-      setIsDequeuing(false)
-    }, 800)
+    }, 2000)
   }
 
   const handlePeek = () => {
     if (queue.length === 0) return
 
+    setAnimationState("peeking")
+    setAnimationStep(1)
     setActiveIndex(0)
-    setIsPeeking(true)
-
-    setTimeout(() => {
-      setActiveIndex(null)
-      setIsPeeking(false)
-    }, 1500)
+    updateAnimationMessage()
   }
 
   const renderQueueVisualization = () => {
     return (
       <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 h-full flex flex-col">
         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Queue Visualization</h3>
+
+        {animationMessage && (
+          <div className="mb-4 p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-md text-center">
+            {animationMessage}
+          </div>
+        )}
 
         <div className="flex-grow flex items-center justify-center">
           <div className="flex flex-row gap-1 items-center">
@@ -82,9 +161,9 @@ export default function QueuesPage() {
                   w-16 h-16 flex items-center justify-center rounded-lg border-2 
                   ${
                     activeIndex === idx
-                      ? isDequeuing
+                      ? animationState === "dequeueing"
                         ? "border-red-500 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 animate-pulse"
-                        : isPeeking
+                        : animationState === "peeking"
                           ? "border-blue-500 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 animate-pulse"
                           : "border-purple-500 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 animate-pulse"
                       : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -92,6 +171,7 @@ export default function QueuesPage() {
                   transition-all duration-300
                   ${idx === 0 ? "relative" : ""}
                   ${idx === queue.length - 1 ? "relative" : ""}
+                  ${animationState === "dequeueing" && idx === 0 && animationStep === 2 ? "transform -translate-x-10 opacity-0" : ""}
                 `}
               >
                 <span className="text-lg font-medium">{value}</span>
@@ -103,6 +183,13 @@ export default function QueuesPage() {
                 )}
               </div>
             ))}
+
+            {/* New element being enqueued */}
+            {animationState === "enqueueing" && animationStep === 1 && newElement !== null && (
+              <div className="w-16 h-16 flex items-center justify-center rounded-lg border-2 border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 animate-bounce ml-4">
+                <span className="text-lg font-medium">{newElement}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -171,18 +258,19 @@ export default function QueuesPage() {
             name: "Enqueue",
             description: "Add an element to the end of the queue",
             action: () => setIsEnqueueDialogOpen(true),
+            disabled: animationState !== "idle",
           },
           {
             name: "Dequeue",
             description: "Remove the front element from the queue",
             action: handleDequeue,
-            disabled: queue.length === 0,
+            disabled: queue.length === 0 || animationState !== "idle",
           },
           {
             name: "Peek",
             description: "View the front element without removing it",
             action: handlePeek,
-            disabled: queue.length === 0,
+            disabled: queue.length === 0 || animationState !== "idle",
           },
         ]}
         renderVisualization={renderQueueVisualization}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DataStructureVisualizer from "./data-structure-visualizer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 
-
 export default function LinkedListsPage() {
   const [linkedList, setLinkedList] = useState<number[]>([10, 20, 30, 40, 50])
   const [newValue, setNewValue] = useState<string>("")
@@ -23,13 +22,129 @@ export default function LinkedListsPage() {
   const [isInsertDialogOpen, setIsInsertDialogOpen] = useState(false)
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const [isRemoving, setIsRemoving] = useState(false)
+  const [animationState, setAnimationState] = useState<"idle" | "adding" | "inserting" | "removing">("idle")
+  const [animationStep, setAnimationStep] = useState<number>(0)
+  const [animationMessage, setAnimationMessage] = useState<string>("")
+  const [newElement, setNewElement] = useState<number | null>(null)
+  const [highlightedIndices, setHighlightedIndices] = useState<number[]>([])
 
-  // Animation timeout to reset active index
-  const resetActiveIndex = () => {
-    setTimeout(() => {
-      setActiveIndex(null)
-    }, 1500)
+  // Reset animation state after completion
+  useEffect(() => {
+    if (animationState !== "idle" && animationStep > 0) {
+      const timer = setTimeout(() => {
+        if (animationStep < getMaxSteps()) {
+          setAnimationStep(animationStep + 1)
+          updateAnimationMessage()
+          updateHighlightedIndices()
+        } else {
+          // Animation complete
+          setTimeout(() => {
+            setAnimationState("idle")
+            setAnimationStep(0)
+            setActiveIndex(null)
+            setAnimationMessage("")
+            setNewElement(null)
+            setHighlightedIndices([])
+          }, 1000)
+        }
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [animationState, animationStep])
+
+  // Get max steps for current animation
+  const getMaxSteps = () => {
+    switch (animationState) {
+      case "adding":
+        return 3
+      case "inserting":
+        return 4
+      case "removing":
+        return 3
+      default:
+        return 0
+    }
+  }
+
+  // Update animation message based on current step
+  const updateAnimationMessage = () => {
+    const idx = Number.parseInt(index)
+    const val = Number.parseInt(newValue)
+
+    switch (animationState) {
+      case "adding":
+        if (animationStep === 1) {
+          setAnimationMessage(`Creating new node with value ${newElement}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Finding the last node in the list`)
+        } else if (animationStep === 3) {
+          setAnimationMessage(`Added new node with value ${newElement} to the end of the list`)
+        }
+        break
+      case "inserting":
+        if (animationStep === 1) {
+          setAnimationMessage(`Creating new node with value ${newElement}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Traversing to position ${idx}`)
+        } else if (animationStep === 3) {
+          setAnimationMessage(`Updating next pointers to insert the new node`)
+        } else if (animationStep === 4) {
+          setAnimationMessage(`Inserted new node with value ${newElement} at position ${idx}`)
+        }
+        break
+      case "removing":
+        if (animationStep === 1) {
+          setAnimationMessage(`Traversing to position ${idx}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Updating next pointers to remove the node`)
+        } else if (animationStep === 3) {
+          setAnimationMessage(`Removed node at position ${idx}`)
+        }
+        break
+    }
+  }
+
+  // Update highlighted indices for traversal animation
+  const updateHighlightedIndices = () => {
+    const idx = Number.parseInt(index)
+
+    switch (animationState) {
+      case "adding":
+        if (animationStep === 1) {
+          setHighlightedIndices([])
+        } else if (animationStep === 2) {
+          // Simulate traversal to the end
+          const traversalIndices = []
+          for (let i = 0; i <= linkedList.length - 1; i++) {
+            traversalIndices.push(i)
+          }
+          setHighlightedIndices(traversalIndices)
+        }
+        break
+      case "inserting":
+        if (animationStep === 1) {
+          setHighlightedIndices([])
+        } else if (animationStep === 2) {
+          // Simulate traversal to the insertion point
+          const traversalIndices = []
+          for (let i = 0; i <= idx; i++) {
+            traversalIndices.push(i)
+          }
+          setHighlightedIndices(traversalIndices)
+        }
+        break
+      case "removing":
+        if (animationStep === 1) {
+          // Simulate traversal to the removal point
+          const traversalIndices = []
+          for (let i = 0; i <= idx; i++) {
+            traversalIndices.push(i)
+          }
+          setHighlightedIndices(traversalIndices)
+        }
+        break
+    }
   }
 
   // Linked List operations
@@ -39,11 +154,18 @@ export default function LinkedListsPage() {
     const value = Number.parseInt(newValue)
     if (isNaN(value)) return
 
-    setLinkedList([...linkedList, value])
+    setNewElement(value)
+    setAnimationState("adding")
+    setAnimationStep(1)
+    updateAnimationMessage()
+
+    // Perform actual list update after animation
+    setTimeout(() => {
+      setLinkedList([...linkedList, value])
+    }, 3000)
+
     setNewValue("")
-    setActiveIndex(linkedList.length)
     setIsAddDialogOpen(false)
-    resetActiveIndex()
   }
 
   const handleInsert = () => {
@@ -54,14 +176,22 @@ export default function LinkedListsPage() {
 
     if (isNaN(value) || isNaN(idx) || idx < 0 || idx > linkedList.length) return
 
-    const newList = [...linkedList]
-    newList.splice(idx, 0, value)
-    setLinkedList(newList)
+    setNewElement(value)
+    setAnimationState("inserting")
+    setAnimationStep(1)
+    setActiveIndex(idx)
+    updateAnimationMessage()
+
+    // Perform actual list update after animation
+    setTimeout(() => {
+      const newList = [...linkedList]
+      newList.splice(idx, 0, value)
+      setLinkedList(newList)
+    }, 4000)
+
     setNewValue("")
     setIndex("")
-    setActiveIndex(idx)
     setIsInsertDialogOpen(false)
-    resetActiveIndex()
   }
 
   const handleRemove = () => {
@@ -70,24 +200,32 @@ export default function LinkedListsPage() {
     const idx = Number.parseInt(index)
     if (isNaN(idx) || idx < 0 || idx >= linkedList.length) return
 
+    setAnimationState("removing")
+    setAnimationStep(1)
     setActiveIndex(idx)
-    setIsRemoving(true)
+    updateAnimationMessage()
 
+    // Perform actual list update after animation
     setTimeout(() => {
       const newList = [...linkedList]
       newList.splice(idx, 1)
       setLinkedList(newList)
-      setIndex("")
-      setIsRemoveDialogOpen(false)
-      setActiveIndex(null)
-      setIsRemoving(false)
-    }, 800)
+    }, 3000)
+
+    setIndex("")
+    setIsRemoveDialogOpen(false)
   }
 
   const renderLinkedListVisualization = () => {
     return (
       <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 h-full flex flex-col">
         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Linked List Visualization</h3>
+
+        {animationMessage && (
+          <div className="mb-4 p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-md text-center">
+            {animationMessage}
+          </div>
+        )}
 
         <div className="flex-grow flex items-center justify-center">
           <div className="flex flex-wrap gap-2 justify-center">
@@ -98,11 +236,14 @@ export default function LinkedListsPage() {
                     w-16 h-16 flex flex-col items-center justify-center rounded-lg border-2
                     ${
                       activeIndex === idx
-                        ? isRemoving
+                        ? animationState === "removing" && animationStep >= 2
                           ? "border-red-500 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 animate-pulse"
                           : "border-purple-500 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 animate-pulse"
-                        : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                        : highlightedIndices.includes(idx)
+                          ? "border-blue-500 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                          : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     }
+                    ${animationState === "removing" && idx === activeIndex && animationStep === 3 ? "opacity-0" : ""}
                     transition-all duration-300
                   `}
                 >
@@ -123,6 +264,34 @@ export default function LinkedListsPage() {
                 <div className="w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-xs text-white">
                   ∅
                 </div>
+              </div>
+            )}
+
+            {/* Show new element being added or inserted */}
+            {(animationState === "adding" || animationState === "inserting") &&
+              animationStep === 1 &&
+              newElement !== null && (
+                <div className="absolute -top-16 flex flex-col items-center">
+                  <div className="w-16 h-16 flex flex-col items-center justify-center rounded-lg border-2 border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 animate-bounce">
+                    <span className="text-lg font-medium">{newElement}</span>
+                    <span className="text-xs text-green-600 dark:text-green-400">New Node</span>
+                  </div>
+                  <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                    {animationState === "adding" ? "Will be added to the end" : `Will be inserted at position ${index}`}
+                  </div>
+                </div>
+              )}
+
+            {/* Show new element being inserted at specific position */}
+            {animationState === "inserting" && animationStep === 3 && newElement !== null && (
+              <div
+                className="absolute w-16 h-16 flex flex-col items-center justify-center rounded-lg border-2 border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                style={{
+                  transform: `translateY(-20px) translateX(${(activeIndex ?? 0) * 76}px)`,
+                }}
+              >
+                <span className="text-lg font-medium">{newElement}</span>
+                <span className="text-xs text-green-600 dark:text-green-400">New Node</span>
               </div>
             )}
           </div>
@@ -294,17 +463,19 @@ export default function LinkedListsPage() {
             name: "Add to End",
             description: "Add a new node to the end of the linked list",
             action: () => setIsAddDialogOpen(true),
+            disabled: animationState !== "idle",
           },
           {
             name: "Insert at Position",
             description: "Insert a new node at a specific position",
             action: () => setIsInsertDialogOpen(true),
+            disabled: animationState !== "idle",
           },
           {
             name: "Remove Node",
             description: "Remove a node at a specific position",
             action: () => setIsRemoveDialogOpen(true),
-            disabled: linkedList.length === 0,
+            disabled: linkedList.length === 0 || animationState !== "idle",
           },
         ]}
         renderVisualization={renderLinkedListVisualization}

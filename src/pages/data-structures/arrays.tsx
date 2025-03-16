@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DataStructureVisualizer from "./data-structure-visualizer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -23,12 +23,87 @@ export default function ArraysPage() {
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false)
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [animationState, setAnimationState] = useState<"idle" | "adding" | "inserting" | "removing" | "updating">(
+    "idle",
+  )
+  const [animationStep, setAnimationStep] = useState<number>(0)
+  const [animationMessage, setAnimationMessage] = useState<string>("")
 
-  // Animation timeout to reset active index
-  const resetActiveIndex = () => {
-    setTimeout(() => {
-      setActiveIndex(null)
-    }, 1500)
+  // Reset animation state after completion
+  useEffect(() => {
+    if (animationState !== "idle" && animationStep > 0) {
+      const timer = setTimeout(() => {
+        if (animationStep < getMaxSteps()) {
+          setAnimationStep(animationStep + 1)
+          updateAnimationMessage()
+        } else {
+          // Animation complete
+          setTimeout(() => {
+            setAnimationState("idle")
+            setAnimationStep(0)
+            setActiveIndex(null)
+            setAnimationMessage("")
+          }, 1000)
+        }
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [animationState, animationStep])
+
+  // Get max steps for current animation
+  const getMaxSteps = () => {
+    switch (animationState) {
+      case "adding":
+        return 2
+      case "inserting":
+        return 3
+      case "removing":
+        return 2
+      case "updating":
+        return 2
+      default:
+        return 0
+    }
+  }
+
+  // Update animation message based on current step
+  const updateAnimationMessage = () => {
+    const idx = Number.parseInt(index)
+    const val = Number.parseInt(newValue)
+
+    switch (animationState) {
+      case "adding":
+        if (animationStep === 1) {
+          setAnimationMessage(`Creating space at the end of the array`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Added ${val} at index ${array.length}`)
+        }
+        break
+      case "inserting":
+        if (animationStep === 1) {
+          setAnimationMessage(`Shifting elements after index ${idx} to make space`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Inserting ${val} at index ${idx}`)
+        } else if (animationStep === 3) {
+          setAnimationMessage(`Inserted ${val} at index ${idx}`)
+        }
+        break
+      case "removing":
+        if (animationStep === 1) {
+          setAnimationMessage(`Removing element at index ${idx}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Shifting elements to fill the gap`)
+        }
+        break
+      case "updating":
+        if (animationStep === 1) {
+          setAnimationMessage(`Accessing element at index ${idx}`)
+        } else if (animationStep === 2) {
+          setAnimationMessage(`Updated value at index ${idx} to ${val}`)
+        }
+        break
+    }
   }
 
   // Array operations
@@ -38,11 +113,18 @@ export default function ArraysPage() {
     const value = Number.parseInt(newValue)
     if (isNaN(value)) return
 
-    setArray([...array, value])
-    setNewValue("")
+    setAnimationState("adding")
+    setAnimationStep(1)
     setActiveIndex(array.length)
+    updateAnimationMessage()
+
+    // Perform actual array update after animation
+    setTimeout(() => {
+      setArray([...array, value])
+    }, 1000)
+
+    setNewValue("")
     setIsAddDialogOpen(false)
-    resetActiveIndex()
   }
 
   const handleInsert = () => {
@@ -53,14 +135,21 @@ export default function ArraysPage() {
 
     if (isNaN(value) || isNaN(idx) || idx < 0 || idx > array.length) return
 
-    const newArray = [...array]
-    newArray.splice(idx, 0, value)
-    setArray(newArray)
+    setAnimationState("inserting")
+    setAnimationStep(1)
+    setActiveIndex(idx)
+    updateAnimationMessage()
+
+    // Perform actual array update after animation
+    setTimeout(() => {
+      const newArray = [...array]
+      newArray.splice(idx, 0, value)
+      setArray(newArray)
+    }, 2000)
+
     setNewValue("")
     setIndex("")
-    setActiveIndex(idx)
     setIsInsertDialogOpen(false)
-    resetActiveIndex()
   }
 
   const handleRemove = () => {
@@ -69,15 +158,20 @@ export default function ArraysPage() {
     const idx = Number.parseInt(index)
     if (isNaN(idx) || idx < 0 || idx >= array.length) return
 
+    setAnimationState("removing")
+    setAnimationStep(1)
     setActiveIndex(idx)
+    updateAnimationMessage()
+
+    // Perform actual array update after animation
     setTimeout(() => {
       const newArray = [...array]
       newArray.splice(idx, 1)
       setArray(newArray)
-      setIndex("")
-      setIsRemoveDialogOpen(false)
-      setActiveIndex(null)
-    }, 500)
+    }, 2000)
+
+    setIndex("")
+    setIsRemoveDialogOpen(false)
   }
 
   const handleUpdate = () => {
@@ -88,20 +182,33 @@ export default function ArraysPage() {
 
     if (isNaN(value) || isNaN(idx) || idx < 0 || idx >= array.length) return
 
-    const newArray = [...array]
-    newArray[idx] = value
-    setArray(newArray)
+    setAnimationState("updating")
+    setAnimationStep(1)
+    setActiveIndex(idx)
+    updateAnimationMessage()
+
+    // Perform actual array update after animation
+    setTimeout(() => {
+      const newArray = [...array]
+      newArray[idx] = value
+      setArray(newArray)
+    }, 1000)
+
     setNewValue("")
     setIndex("")
-    setActiveIndex(idx)
     setIsUpdateDialogOpen(false)
-    resetActiveIndex()
   }
 
   const renderArrayVisualization = () => {
     return (
       <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 h-full flex flex-col">
         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Array Visualization</h3>
+
+        {animationMessage && (
+          <div className="mb-4 p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-md text-center">
+            {animationMessage}
+          </div>
+        )}
 
         <div className="flex-grow flex items-center justify-center">
           <div className="flex flex-wrap gap-2 justify-center">
@@ -115,18 +222,47 @@ export default function ArraysPage() {
                       ? "border-purple-500 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 animate-pulse"
                       : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   }
+                  ${animationState === "inserting" && animationStep === 1 && idx >= Number.parseInt(index) ? "transform translate-x-4 transition-transform duration-500" : ""}
+                  ${animationState === "removing" && animationStep === 2 && activeIndex !== null && idx > activeIndex ? "transform -translate-x-4 transition-transform duration-500" : ""}
                   transition-all duration-300
                 `}
               >
                 <span className="text-lg font-medium">{value}</span>
               </div>
             ))}
+
+            {/* Show new element being added */}
+            {animationState === "adding" && animationStep === 1 && (
+              <div className="w-16 h-16 flex items-center justify-center rounded-lg border-2 border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 animate-bounce">
+                <span className="text-lg font-medium">{newValue}</span>
+              </div>
+            )}
+
+            {/* Show new element being inserted */}
+            {animationState === "inserting" && animationStep === 2 && (
+              <div
+                className="absolute w-16 h-16 flex items-center justify-center rounded-lg border-2 border-green-500 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 animate-bounce"
+                style={{
+                  transform: `translateY(-20px) translateX(${(activeIndex ?? 0) * 72}px)`,
+                }}
+              >
+                <span className="text-lg font-medium">{newValue}</span>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="mt-4 text-center text-slate-600 dark:text-slate-400">
           <p>Array Length: {array.length}</p>
-          <p className="text-xs mt-1">Indices: 0 to {array.length - 1}</p>
+          <div className="flex justify-center mt-2 overflow-x-auto">
+            <div className="flex">
+              {array.map((_, idx) => (
+                <div key={idx} className="w-16 text-center text-xs">
+                  {idx}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -340,23 +476,25 @@ export default function ArraysPage() {
             name: "Add Element",
             description: "Add a new element to the end of the array",
             action: () => setIsAddDialogOpen(true),
+            disabled: animationState !== "idle",
           },
           {
             name: "Insert Element",
             description: "Insert a new element at a specific index",
             action: () => setIsInsertDialogOpen(true),
+            disabled: animationState !== "idle",
           },
           {
             name: "Remove Element",
             description: "Remove an element at a specific index",
             action: () => setIsRemoveDialogOpen(true),
-            disabled: array.length === 0,
+            disabled: array.length === 0 || animationState !== "idle",
           },
           {
             name: "Update Element",
             description: "Update an element at a specific index",
             action: () => setIsUpdateDialogOpen(true),
-            disabled: array.length === 0,
+            disabled: array.length === 0 || animationState !== "idle",
           },
         ]}
         renderVisualization={renderArrayVisualization}
