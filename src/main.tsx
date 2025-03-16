@@ -10,7 +10,7 @@ import {
 } from "react-router";
 
 import About from './pages/About.tsx';
-
+import {ArraysPage,StacksPage,QueuesPage,LinkedListsPage} from './pages/data-structures';
 import Sorting from './pages/Sorting.tsx';
 import Race from './pages/race/Race.tsx';
 
@@ -37,6 +37,10 @@ let router = createBrowserRouter([
       { path: "algorithms/searching", element: <Searching /> },
       { path: "algorithms/sorting", element: <Sorting /> },
       { path: "race", element: <Race /> },
+      { path: "data-structures/arrays", element: <ArraysPage /> },
+      { path: "data-structures/queues", element: <QueuesPage /> },
+      { path: "data-structures/stacks", element: <StacksPage /> },
+      { path: "data-structures/linked-lists", element: <LinkedListsPage /> }
     ],
   },
 ]);
