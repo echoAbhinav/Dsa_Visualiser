@@ -70,7 +70,7 @@ export default function LinkedListsPage() {
   // Update animation message based on current step
   const updateAnimationMessage = () => {
     const idx = Number.parseInt(index)
-    const val = Number.parseInt(newValue)
+   
 
     switch (animationState) {
       case "adding":
