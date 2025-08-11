@@ -18,7 +18,7 @@ function Layout() {
     <>
 <Navbar/>
     <Outlet key={location.pathname}/>
-    <Footer/>
+    {location.pathname === '/about' && <Footer/>}
       
     </>
   )
