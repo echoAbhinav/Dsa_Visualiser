@@ -1,4 +1,0 @@
-## 📜 License
-
-This project is licensed under the [MIT License](LICENSE) © 2025 Abhinav Tiwari.  
-Feel free to use, modify, and distribute this project for personal or commercial purposes.
