@@ -149,3 +149,7 @@ Contributions are welcome! Feel free to fork the repository and open a pull requ
 4. Push to the branch (`git push origin feature/my-feature`)  
 5. Open a Pull Request 🚀  
 
+<img width="1887" height="856" alt="image" src="https://github.com/user-attachments/assets/b1cae5af-c4d1-4e69-bf99-1eb3b7adbec0" />
+<img width="1886" height="674" alt="image" src="https://github.com/user-attachments/assets/338f73e2-cf19-46cc-9a54-1d8a323c53a3" />
+<img width="1797" height="743" alt="image" src="https://github.com/user-attachments/assets/1c7e54c9-04b5-469f-bf20-e054c673f5d5" />
+
